@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { BsSunrise, BsSunset } from "react-icons/bs";
 import { FaAngellist, FaBusinessTime } from "react-icons/fa";
 import { FaBook, FaGamepad, FaPersonRunning, FaPlus } from "react-icons/fa6";
 import { GiBiceps, GiSunrise, GiSunset } from "react-icons/gi";
-import type { DaySchemaType } from "~/server/api/types";
+import type { ActivitySchemaType, DaySchemaType } from "~/server/api/types";
 import { Button } from "./activityButton";
 
 export default function Day({ day }: { day: DaySchemaType }) {
@@ -97,21 +98,7 @@ export default function Day({ day }: { day: DaySchemaType }) {
         {activities && activities.length > 0 ? (
           <ul className="flex flex-col gap-1">
             {activities.map((activity) => (
-              <Button
-                key={activity.id}
-                className={`flex items-center gap-2 rounded-lg p-2 text-left ${activity.prominent ? "min-h-[300px] flex-col justify-center" : "min-h-[100px]"}`}
-                intent={activity.style}
-              >
-                <span className={`${activity.prominent ? "" : "w-1/5"}`}>
-                  {activity.icon}
-                </span>
-                <div className="flex flex-col items-start">
-                  <p className="line-clamp-1 font-bold">{activity.name}</p>
-                  <p className="line-clamp-2 text-gray-200 text-xs">
-                    {activity.description}
-                  </p>
-                </div>
-              </Button>
+              <ActivityCard key={activity.id} activity={activity} />
             ))}
           </ul>
         ) : (
@@ -133,3 +120,42 @@ export default function Day({ day }: { day: DaySchemaType }) {
     </div>
   );
 }
+
+const ActivityCard = ({ activity }: { activity: ActivitySchemaType }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        setIsOpen(!isOpen);
+        console.log("clicked");
+      }}
+      className="perspective-normal min-h-[100px] "
+    >
+      <div
+        className={`transform-3d relative size-full transition duration-300 ${isOpen ? "rotate-y-180" : ""}`}
+      >
+        <div className="backface-hidden absolute inset-0 size-full">
+          <Button
+            className="flex size-full items-center gap-2 rounded-lg p-2 text-left"
+            intent={activity.style}
+          >
+            <span className={`${activity.prominent ? "" : "w-1/5"}`}>
+              {activity.icon}
+            </span>
+            <div className="flex flex-col items-start">
+              <p className="line-clamp-1 font-bold">{activity.name}</p>
+              <p className="line-clamp-2 text-gray-200 text-xs">
+                {activity.description}
+              </p>
+            </div>
+          </Button>
+        </div>
+        <div className="backface-hidden fixed inset-0 size-full rotate-y-180 rounded-lg bg-background">
+          Back
+        </div>
+      </div>
+    </button>
+  );
+};

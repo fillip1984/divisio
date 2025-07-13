@@ -17,3 +17,7 @@
 ## Project powered by the T3 stack
 
 This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+
+## Other useful resources
+
+- <https://www.telerik.com/blogs/card-flip-tailwind>

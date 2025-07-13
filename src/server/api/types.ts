@@ -4,6 +4,9 @@ export const ActivitySchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().optional(),
+  style: z.string().optional(),
+  icon: z.any().optional(),
+  prominent: z.boolean().optional(),
 });
 export type ActivitySchemaType = z.infer<typeof ActivitySchema>;
 
