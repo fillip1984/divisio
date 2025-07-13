@@ -31,7 +31,7 @@ export default function RootLayout({
   const randomIndex = Math.floor(Math.random() * backgrounds.length);
   return (
     <html lang="en" className={`${geist.variable}`}>
-      <body className="bg-background">
+      <body className="overflow-hidden bg-background">
         <TRPCReactProvider>
           <main
             className="relative flex min-h-screen overflow-hidden text-white"

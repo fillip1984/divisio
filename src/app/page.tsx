@@ -21,8 +21,8 @@ export default async function Home() {
 
   return (
     <HydrateClient>
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex snap-x snap-mandatory gap-2 overflow-y-auto p-4">
+      <div className="flex h-screen flex-1 overflow-hidden">
+        <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto p-4">
           {days.map((day) => (
             <Day key={day.label} day={day} />
           ))}
