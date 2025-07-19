@@ -18,3 +18,34 @@ model Post {
 
     @@index([name])
 }
+
+model Day {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    label String
+
+    activities Activity[]
+}
+
+model Activity {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    day                Day    @relation(fields: [dayId], references: [id])
+    dayId              String
+    activityTemplateId String
+}
+
+model Routine {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    name        String
+    description String?
+    style       String?
+    icon        String?
+}
