@@ -1,9 +1,9 @@
 "use client";
 
 import { useDragAndDrop } from "@formkit/drag-and-drop/react";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { AnimatePresence, motion } from "motion/react";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { BsSunrise, BsSunset } from "react-icons/bs";
 import { FaPlus } from "react-icons/fa6";
 import type { Daylight } from "~/server/api/routers/daylight";
@@ -13,7 +13,12 @@ import type {
   TimeslotSchemaType,
 } from "~/server/api/types";
 import { api } from "~/trpc/react";
-import { findDateByDayOfWeek } from "~/utils/date";
+import {
+  HH_mm_aka24hr,
+  MMMdd,
+  findDateByDayOfWeek,
+  h_mm_a_aka12hr,
+} from "~/utils/date";
 import { retrieveIcon } from "~/utils/icon";
 import { Button } from "./activityButton";
 import LoadingAndRetry from "./shared/LoadingAndRetry";
@@ -23,19 +28,19 @@ export default function Day({ day }: { day: DaySchemaType }) {
   const [date, setDate] = useState<Date>(
     findDateByDayOfWeek(new Date(), day.value),
   );
-  const {
-    data: daylight,
-    isLoading: isLoadingDaylight,
-    isError: isErrorDaylight,
-    refetch: retryDaylight,
-  } = api.daylight.find.useQuery(
-    {
-      date: date,
-    },
-    {
-      enabled: !!date,
-    },
-  );
+  // const {
+  //   data: daylight,
+  //   isLoading: isLoadingDaylight,
+  //   isError: isErrorDaylight,
+  //   refetch: retryDaylight,
+  // } = api.daylight.find.useQuery(
+  //   {
+  //     date: date,
+  //   },
+  //   {
+  //     enabled: !!date,
+  //   },
+  // );
   const [isAddActivityModalOpen, setIsAddActivityModalOpen] = useState(false);
 
   // dnd stuff
@@ -66,25 +71,25 @@ export default function Day({ day }: { day: DaySchemaType }) {
         <div className="flex flex-col p-2">
           <div className="flex items-center justify-between">
             <h3>{day.label}</h3>
-            {date && <p>{format(date, "MMM dd")}</p>}
+            {date && <p>{format(date, MMMdd)}</p>}
           </div>
-          {daylight && <DaylightCard daylight={daylight} />}
+          {/* {daylight && <DaylightCard daylight={daylight} />} */}
         </div>
 
         {/* Suspense/loading view */}
-        {isLoadingDaylight && (
+        {/* {isLoadingDaylight && (
           <LoadingAndRetry
             isLoading={isLoadingDaylight}
             isError={isErrorDaylight}
             retry={retryDaylight}
           />
-        )}
+        )} */}
 
         {/* main section */}
         <div className="flex flex-1 overflow-hidden">
           <div
             ref={parentRef}
-            className="flex flex-col gap-2 overflow-y-auto px-2 pb-12"
+            className="flex flex-1 flex-col gap-2 overflow-y-auto px-2 pb-12"
           >
             {draggableTimeslots?.map((timeslot) => (
               <RoutineCard
@@ -251,8 +256,9 @@ const RoutineCard = ({
         </p>
         {timeslot && (
           <p className="font-bold text-xs">
-            {format(new Date(timeslot.startTime), "HH:mm a")} -{" "}
-            {format(new Date(timeslot.endTime), "HH:mm a")}
+            {`${format(parse(timeslot.startTime, HH_mm_aka24hr, new Date()), h_mm_a_aka12hr)} - ${format(parse(timeslot.endTime, HH_mm_aka24hr, new Date()), h_mm_a_aka12hr)}`}
+            {/* {format(new Date(timeslot.startTime), h_mm_a_aka12hr)} -{" "}
+            {format(new Date(timeslot.endTime), h_mm_a_aka12hr)} */}
           </p>
         )}
       </div>
@@ -270,7 +276,7 @@ const DaylightCard = ({ daylight }: { daylight: Daylight }) => {
     >
       <span className="flex min-w-1/4 flex-col items-center justify-center">
         <BsSunrise className="text-3xl" />
-        <span>{daylight.firstLight.toLocaleTimeString()}</span>
+        <span>{format(daylight.firstLight, h_mm_a_aka12hr)}</span>
       </span>
       <div className="flex flex-1 flex-col items-center justify-center">
         <p className="font-bold">Daylight</p>
@@ -280,7 +286,7 @@ const DaylightCard = ({ daylight }: { daylight: Daylight }) => {
       </div>
       <span className="flex min-w-1/4 flex-col items-center justify-center">
         <BsSunset className="text-3xl" />
-        <span>{daylight.lastLight.toLocaleTimeString()}</span>
+        <span>{format(daylight.lastLight, h_mm_a_aka12hr)}</span>
       </span>
       <p className="absolute right-0 bottom-0 rounded p-1 text-[8px] text-gray-300">
         Source: sunrise-sunset.org

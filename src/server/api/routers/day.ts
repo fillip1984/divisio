@@ -1,4 +1,3 @@
-import { addDays, eachDayOfInterval, endOfWeek, startOfWeek } from "date-fns";
 import z from "zod";
 import {
   createTRPCRouter,
@@ -9,7 +8,12 @@ import {
 export const dayRouter = createTRPCRouter({
   findAll: publicProcedure.query(async ({ ctx }) => {
     let days = await ctx.db.day.findMany({
-      include: { timeslots: { include: { routine: true } } },
+      include: {
+        timeslots: {
+          include: { routine: true },
+          orderBy: { startTime: "asc" },
+        },
+      },
       orderBy: { value: "asc" },
     });
     if (days.length === 0) {
@@ -38,8 +42,8 @@ export const dayRouter = createTRPCRouter({
         data: {
           dayId,
           routineId,
-          startTime: new Date(startTime),
-          endTime: new Date(endTime),
+          startTime,
+          endTime,
         },
       });
     }),
@@ -66,8 +70,8 @@ export const dayRouter = createTRPCRouter({
       return await ctx.db.timeslot.update({
         where: { id },
         data: {
-          startTime: new Date(startTime),
-          endTime: new Date(endTime),
+          startTime,
+          endTime,
         },
       });
     }),
