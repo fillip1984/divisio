@@ -10,21 +10,13 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@index([name])
-}
-
 model Day {
     id        String   @id @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
     label String
+    value Int
 
     activities Activity[]
 }
@@ -45,7 +37,7 @@ model Routine {
     updatedAt DateTime @updatedAt
 
     name        String
-    description String?
-    style       String?
-    icon        String?
+    description String
+    style       String
+    icon        String
 }

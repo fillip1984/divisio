@@ -12,7 +12,8 @@ export type ActivitySchemaType = z.infer<typeof ActivitySchema>;
 
 export const DaySchema = z.object({
   label: z.string(),
-  // value: z.number(),
+  value: z.number(),
+  date: z.date(),
   activities: z.array(ActivitySchema).optional(),
 });
 export type DaySchemaType = z.infer<typeof DaySchema>;

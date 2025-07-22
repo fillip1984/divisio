@@ -1,7 +1,8 @@
-import { postRouter } from "~/server/api/routers/post";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { activityRouter } from "./routers/activity";
 import { dayRouter } from "./routers/day";
+import { DaylightRouter } from "./routers/daylight";
+import { routineRouter } from "./routers/routine";
 
 /**
  * This is the primary router for your server.
@@ -9,9 +10,10 @@ import { dayRouter } from "./routers/day";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  post: postRouter,
   day: dayRouter,
   activity: activityRouter,
+  routine: routineRouter,
+  daylight: DaylightRouter,
 });
 
 // export type definition of API
