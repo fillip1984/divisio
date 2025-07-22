@@ -1,5 +1,4 @@
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
-import { activityRouter } from "./routers/activity";
 import { dayRouter } from "./routers/day";
 import { DaylightRouter } from "./routers/daylight";
 import { routineRouter } from "./routers/routine";
@@ -11,7 +10,6 @@ import { routineRouter } from "./routers/routine";
  */
 export const appRouter = createTRPCRouter({
   day: dayRouter,
-  activity: activityRouter,
   routine: routineRouter,
   daylight: DaylightRouter,
 });

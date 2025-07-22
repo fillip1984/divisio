@@ -18,18 +18,36 @@ model Day {
     label String
     value Int
 
-    activities Activity[]
+    timeslots Timeslot[]
 }
 
-model Activity {
+model Timeslot {
     id        String   @id @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    day                Day    @relation(fields: [dayId], references: [id])
-    dayId              String
-    activityTemplateId String
+    startTime DateTime
+    endTime   DateTime
+
+    day   Day    @relation(fields: [dayId], references: [id])
+    dayId String
+
+    routine   Routine @relation(fields: [routineId], references: [id])
+    routineId String
 }
+
+// model Activity {
+//     id        String   @id @default(cuid())
+//     createdAt DateTime @default(now())
+//     updatedAt DateTime @updatedAt
+
+//     day   Day    @relation(fields: [dayId], references: [id])
+//     dayId String
+
+//     routine   Routine    @relation(fields: [routineId], references: [id])
+//     routineId String
+//     Timeslot  Timeslot[]
+// }
 
 model Routine {
     id        String   @id @default(cuid())
@@ -40,4 +58,6 @@ model Routine {
     description String
     style       String
     icon        String
+
+    timeslots Timeslot[]
 }

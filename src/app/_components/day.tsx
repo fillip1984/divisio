@@ -5,16 +5,27 @@ import { useState } from "react";
 import { BsSunrise, BsSunset } from "react-icons/bs";
 import { FaPlus } from "react-icons/fa6";
 import type { Daylight } from "~/server/api/routers/daylight";
-import type { ActivitySchemaType, DaySchemaType } from "~/server/api/types";
+
+import type {
+  DaySchemaType,
+  RoutineSchemaType,
+  TimeslotSchemaType,
+} from "~/server/api/types";
 import { api } from "~/trpc/react";
 import { retrieveIcon } from "~/utils/icon";
 import { Button } from "./activityButton";
+import LoadingAndRetry from "./shared/LoadingAndRetry";
 import Modal from "./ui/modal";
 
 export default function Day({ day }: { day: DaySchemaType }) {
   const [isAddActivityModalOpen, setIsAddActivityModalOpen] = useState(false);
 
-  const { data: daylight } = api.daylight.find.useQuery({
+  const {
+    data: daylight,
+    isLoading: isLoadingDaylight,
+    isError: isErrorDaylight,
+    refetch: retryDaylight,
+  } = api.daylight.find.useQuery({
     date: new Date(day.date),
   });
 
@@ -22,7 +33,7 @@ export default function Day({ day }: { day: DaySchemaType }) {
     <>
       <div
         key={day.label}
-        className={`flex min-w-[400px] snap-center flex-col gap-2 overflow-hidden rounded-lg border border-white/40 ${day.activities && day.activities.length > 0 ? "bg-green-400/80" : "bg-black/30"}`}
+        className={`flex min-w-[400px] snap-center flex-col gap-2 overflow-hidden rounded-lg border bg-background/30 ${day.timeslots && day.timeslots.length > 0 ? "border-green-400" : "border-white/40"}`}
       >
         {/* heading */}
         <div className="flex items-center justify-between p-2">
@@ -31,31 +42,51 @@ export default function Day({ day }: { day: DaySchemaType }) {
         </div>
 
         {/* activities */}
-        <div className="flex flex-col gap-1 overflow-y-auto px-3 pb-8">
-          {daylight && <DaylightCard daylight={daylight} />}
+        {isLoadingDaylight && (
+          <LoadingAndRetry
+            isLoading={isLoadingDaylight}
+            isError={isErrorDaylight}
+            retry={retryDaylight}
+          />
+        )}
 
-          <ul className="flex flex-col gap-1">
-            {day.activities?.map((activity) => (
-              <ActivityCard key={activity.id} activity={activity} />
-            ))}
-          </ul>
-        </div>
+        {!isLoadingDaylight && (
+          <div className="flex flex-col gap-1 overflow-y-auto px-3 pb-8">
+            {daylight && <DaylightCard daylight={daylight} />}
+
+            <div className="flex flex-col gap-1">
+              {day.timeslots.map((timeslot) => (
+                <RoutineCard
+                  key={timeslot.id}
+                  routine={timeslot.routine}
+                  timeslot={timeslot}
+                  onClick={() =>
+                    window.open(`/activities/${timeslot.routine.id}`, "_blank")
+                  }
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* footer */}
-        <div className="flex p-1">
-          <button
-            type="button"
-            onClick={() => setIsAddActivityModalOpen(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-white py-2 font-bold text-2xl hover:bg-white/95 hover:text-black"
-          >
-            <FaPlus className="" />
-            Add
-          </button>
-        </div>
+        {!isLoadingDaylight && (
+          <div className="flex p-1">
+            <button
+              type="button"
+              onClick={() => setIsAddActivityModalOpen(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-white py-2 font-bold text-2xl hover:bg-white/95 hover:text-black"
+            >
+              <FaPlus className="" />
+              Add
+            </button>
+          </div>
+        )}
       </div>
       <AddActivityModal
         isOpen={isAddActivityModalOpen}
         close={() => setIsAddActivityModalOpen(false)}
+        dayId={day.id}
       />
     </>
   );
@@ -64,28 +95,48 @@ export default function Day({ day }: { day: DaySchemaType }) {
 const AddActivityModal = ({
   isOpen,
   close,
-}: { isOpen: boolean; close: () => void }) => {
+  dayId,
+}: { isOpen: boolean; close: () => void; dayId: string }) => {
+  const utils = api.useUtils();
   const { data: routines } = api.routine.findAll.useQuery();
+  const { mutate: addTimeslot } = api.day.addTimeslot.useMutation({
+    onSuccess: () => {
+      void utils.day.findAll.invalidate();
+      console.log("activities and days invalidated");
+      close();
+    },
+    onError: (error) => {
+      console.error("Failed to add activity:", error);
+    },
+  });
   return (
     <Modal isOpen={isOpen} close={close}>
       <div className="max-w-[800px] rounded-lg bg-background p-4 shadow-lg">
         <div className="flex flex-col gap-2">
           {routines?.map((routine) => (
-            <ActivityCard
+            <RoutineCard
               key={routine.id}
-              activity={{
-                id: routine.id,
-                name: routine.name,
-                description: routine.description,
-                icon: routine.icon,
-                style: routine.style,
-                // prominent: routine.prominent,
-              }}
+              routine={
+                {
+                  id: routine.id,
+                  name: routine.name,
+                  description: routine.description,
+                  icon: routine.icon,
+                  style: routine.style,
+                } as RoutineSchemaType
+              }
+              timeslot={undefined}
+              onClick={() =>
+                addTimeslot({
+                  dayId,
+                  routineId: routine.id,
+                  startTime: new Date().toISOString(),
+                  endTime: new Date(
+                    new Date().getTime() + 60 * 60 * 1000,
+                  ).toISOString(),
+                })
+              }
             />
-            // <div key={routine.id} className="mb-2">
-            //   <h3 className="font-semibold">{routine.name}</h3>
-            //   <p className="text-gray-500 text-sm">{routine.description}</p>
-            // </div>
           ))}
         </div>
       </div>
@@ -93,18 +144,33 @@ const AddActivityModal = ({
   );
 };
 
-const ActivityCard = ({ activity }: { activity: ActivitySchemaType }) => {
+const RoutineCard = ({
+  routine,
+  onClick,
+  timeslot,
+}: {
+  routine: RoutineSchemaType;
+  onClick: () => void;
+  timeslot: TimeslotSchemaType | undefined;
+}) => {
   return (
     <Button
+      onClick={onClick}
       className="flex size-full items-center gap-2 rounded-lg p-2 text-left transition duration-200"
-      intent={activity.style ?? "blueAndGreen"}
+      // intent={(routine.style as unknown as ConfigVariants) ?? "blueAndGreen"}
     >
-      <span className="text-4xl">{retrieveIcon(activity.icon)}</span>
+      <span className="text-4xl">{retrieveIcon(routine.icon)}</span>
       <div className="flex flex-col items-start">
-        <p className="line-clamp-1 font-bold">{activity.name}</p>
+        <p className="line-clamp-1 font-bold">{routine.name}</p>
         <p className="line-clamp-2 text-gray-200 text-xs">
-          {activity.description}
+          {routine.description}
         </p>
+        {timeslot && (
+          <p className="font-bold text-xs">
+            {format(new Date(timeslot.startTime), "HH:mm")} -{" "}
+            {format(new Date(timeslot.endTime), "HH:mm")}
+          </p>
+        )}
       </div>
     </Button>
   );
