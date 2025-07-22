@@ -56,17 +56,21 @@ export default function Day({ day }: { day: DaySchemaType }) {
 
   return (
     <>
+      {/* column that snaps to center */}
       <div
         key={day.label}
         className={`flex min-w-[400px] snap-center flex-col gap-2 overflow-hidden rounded-lg border bg-background/30 ${day.timeslots && day.timeslots.length > 0 ? "border-green-400" : "border-white/40"}`}
       >
         {/* heading */}
-        <div className="flex items-center justify-between p-2">
-          <h3>{day.label}</h3>
-          {date && <p>{format(date, "MMM dd")}</p>}
+        <div className="flex flex-col p-2">
+          <div className="flex items-center justify-between">
+            <h3>{day.label}</h3>
+            {date && <p>{format(date, "MMM dd")}</p>}
+          </div>
+          {daylight && <DaylightCard daylight={daylight} />}
         </div>
 
-        {/* activities */}
+        {/* Suspense/loading view */}
         {isLoadingDaylight && (
           <LoadingAndRetry
             isLoading={isLoadingDaylight}
@@ -75,13 +79,12 @@ export default function Day({ day }: { day: DaySchemaType }) {
           />
         )}
 
-        {/* using visible/hidden classes instead of omitting from DOM because DnD is looking for the ref */}
-        <div
-          className={`flex flex-1 flex-col gap-1 overflow-y-auto px-3 pb-8 ${isLoadingDaylight ? "hidden" : "visible"}`}
-        >
-          {daylight && <DaylightCard daylight={daylight} />}
-
-          <div ref={parentRef} className="my-2 flex flex-1 flex-col gap-1">
+        {/* main section */}
+        <div className="flex flex-1 overflow-hidden">
+          <div
+            ref={parentRef}
+            className="flex flex-col gap-2 overflow-y-auto px-2 pb-12"
+          >
             {draggableTimeslots?.map((timeslot) => (
               <RoutineCard
                 key={timeslot.id}
@@ -91,18 +94,18 @@ export default function Day({ day }: { day: DaySchemaType }) {
               />
             ))}
           </div>
+        </div>
 
-          {/* footer */}
-          <div className="flex p-1">
-            <button
-              type="button"
-              onClick={() => setIsAddActivityModalOpen(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-white py-2 font-bold text-2xl hover:bg-white/95 hover:text-black"
-            >
-              <FaPlus />
-              Add
-            </button>
-          </div>
+        {/* footer */}
+        <div className="flex p-2">
+          <button
+            type="button"
+            onClick={() => setIsAddActivityModalOpen(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-white py-2 font-bold text-2xl hover:bg-white/95 hover:text-black"
+          >
+            <FaPlus />
+            Add
+          </button>
         </div>
       </div>
       <AddActivityModal
@@ -179,7 +182,7 @@ const RoutineCard = ({
     <Button
       onClick={onClick}
       className="flex size-full h-[100px] items-center gap-2 rounded-lg p-2 text-left transition duration-200"
-      // intent={routine.style ?? "blueAndGreen"}
+      intent={routine.style ?? "blueAndGreen"}
     >
       <span className="text-4xl">{retrieveIcon(routine.icon)}</span>
       <div className="flex flex-col items-start">
