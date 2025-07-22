@@ -2,7 +2,8 @@
 
 import { useDragAndDrop } from "@formkit/drag-and-drop/react";
 import { format } from "date-fns";
-import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { use, useEffect, useState } from "react";
 import { BsSunrise, BsSunset } from "react-icons/bs";
 import { FaPlus } from "react-icons/fa6";
 import type { Daylight } from "~/server/api/routers/daylight";
@@ -123,7 +124,27 @@ const AddActivityModal = ({
   dayId,
 }: { isOpen: boolean; close: () => void; dayId: string }) => {
   const utils = api.useUtils();
+  const [startTime, setStartTime] = useState<string>("");
+  const [endTime, setEndTime] = useState<string>("");
   const { data: routines } = api.routine.findAll.useQuery();
+  const [routineSearch, setRoutineSearch] = useState<string>("");
+  const [filteredRoutines, setFilteredRoutines] = useState<RoutineSchemaType[]>(
+    routines || [],
+  );
+  useEffect(() => {
+    if (routines) {
+      setFilteredRoutines(
+        routines.filter(
+          (routine) =>
+            routine.name.toLowerCase().includes(routineSearch.toLowerCase()) ||
+            routine.description
+              .toLowerCase()
+              .includes(routineSearch.toLowerCase()),
+        ),
+      );
+    }
+  }, [routines, routineSearch]);
+
   const { mutate: addTimeslot } = api.day.addTimeslot.useMutation({
     onSuccess: () => {
       void utils.day.findAll.invalidate();
@@ -136,33 +157,71 @@ const AddActivityModal = ({
   });
   return (
     <Modal isOpen={isOpen} close={close}>
-      <div className="max-w-[800px] rounded-lg bg-background p-4 shadow-lg">
-        <div className="flex flex-col gap-2">
-          {routines?.map((routine) => (
-            <RoutineCard
-              key={routine.id}
-              routine={
-                {
-                  id: routine.id,
-                  name: routine.name,
-                  description: routine.description,
-                  icon: routine.icon,
-                  style: routine.style,
-                } as RoutineSchemaType
-              }
-              timeslot={undefined}
-              onClick={() =>
-                addTimeslot({
-                  dayId,
-                  routineId: routine.id,
-                  startTime: new Date().toISOString(),
-                  endTime: new Date(
-                    new Date().getTime() + 60 * 60 * 1000,
-                  ).toISOString(),
-                })
-              }
+      <div className="flex h-full w-full flex-col rounded-lg bg-background p-4 shadow-lg md:h-[600px] md:w-[800px]">
+        <div className="my-2 flex gap-2">
+          <div className="flex w-full flex-col">
+            <label htmlFor="start">Start</label>
+            <input
+              id="start"
+              type="time"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className="rounded-lg border p-2 text-lg"
             />
-          ))}
+          </div>
+          <div className="flex w-full flex-col">
+            <label htmlFor="end">End</label>
+            <input
+              id="end"
+              type="time"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              className="rounded-lg border p-2 text-lg"
+            />
+          </div>
+        </div>
+        <div className="my-2">
+          <input
+            type="search"
+            value={routineSearch}
+            onChange={(e) => setRoutineSearch(e.target.value)}
+            placeholder="Search for a routine..."
+            className="w-full rounded-lg border p-2 text-lg"
+          />
+        </div>
+
+        <div className="flex flex-col gap-2 overflow-y-auto p-2">
+          <AnimatePresence>
+            {filteredRoutines?.map((routine) => (
+              <motion.div
+                key={routine.id}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <RoutineCard
+                  routine={
+                    {
+                      id: routine.id,
+                      name: routine.name,
+                      description: routine.description,
+                      icon: routine.icon,
+                      style: routine.style,
+                    } as RoutineSchemaType
+                  }
+                  timeslot={undefined}
+                  onClick={() =>
+                    addTimeslot({
+                      dayId,
+                      routineId: routine.id,
+                      startTime,
+                      endTime,
+                    })
+                  }
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </div>
     </Modal>
