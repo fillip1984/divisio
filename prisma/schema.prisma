@@ -26,8 +26,8 @@ model Timeslot {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    startTime DateTime
-    endTime   DateTime
+    startTime String
+    endTime   String
 
     day   Day    @relation(fields: [dayId], references: [id])
     dayId String
