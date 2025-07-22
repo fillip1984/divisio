@@ -1,11 +1,11 @@
 "use client";
 
+import { useDragAndDrop } from "@formkit/drag-and-drop/react";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BsSunrise, BsSunset } from "react-icons/bs";
 import { FaPlus } from "react-icons/fa6";
 import type { Daylight } from "~/server/api/routers/daylight";
-
 import type {
   DaySchemaType,
   RoutineSchemaType,
@@ -37,6 +37,23 @@ export default function Day({ day }: { day: DaySchemaType }) {
   );
   const [isAddActivityModalOpen, setIsAddActivityModalOpen] = useState(false);
 
+  // dnd stuff
+  const [parentRef, draggableTimeslots, setDraggableTimeslots] = useDragAndDrop<
+    HTMLDivElement,
+    TimeslotSchemaType
+  >([], {
+    group: "timeslots",
+    onDragend(data) {
+      // TODO: not sure if this was a bug or not, but after dragging styles like z index and box shadow remained in the style attribute. This is to clear them out
+      if (data) {
+        data.draggedNode.el.removeAttribute("style");
+      }
+    },
+  });
+  useEffect(() => {
+    setDraggableTimeslots(day.timeslots);
+  }, [day, setDraggableTimeslots]);
+
   return (
     <>
       <div
@@ -58,38 +75,35 @@ export default function Day({ day }: { day: DaySchemaType }) {
           />
         )}
 
-        {!isLoadingDaylight && (
-          <div className="flex flex-col gap-1 overflow-y-auto px-3 pb-8">
-            {daylight && <DaylightCard daylight={daylight} />}
+        {/* using visible/hidden classes instead of omitting from DOM because DnD is looking for the ref */}
+        <div
+          className={`flex flex-1 flex-col gap-1 overflow-y-auto px-3 pb-8 ${isLoadingDaylight ? "hidden" : "visible"}`}
+        >
+          {daylight && <DaylightCard daylight={daylight} />}
 
-            <div className="flex flex-col gap-1">
-              {day.timeslots.map((timeslot) => (
-                <RoutineCard
-                  key={timeslot.id}
-                  routine={timeslot.routine}
-                  timeslot={timeslot}
-                  onClick={() =>
-                    window.open(`/activities/${timeslot.routine.id}`, "_blank")
-                  }
-                />
-              ))}
-            </div>
+          <div ref={parentRef} className="my-2 flex flex-1 flex-col gap-1">
+            {draggableTimeslots?.map((timeslot) => (
+              <RoutineCard
+                key={timeslot.id}
+                routine={timeslot.routine}
+                timeslot={timeslot}
+                onClick={() => console.log("Need to figure something out here")}
+              />
+            ))}
           </div>
-        )}
 
-        {/* footer */}
-        {!isLoadingDaylight && (
+          {/* footer */}
           <div className="flex p-1">
             <button
               type="button"
               onClick={() => setIsAddActivityModalOpen(true)}
               className="flex w-full items-center justify-center gap-2 rounded-lg border border-white py-2 font-bold text-2xl hover:bg-white/95 hover:text-black"
             >
-              <FaPlus className="" />
+              <FaPlus />
               Add
             </button>
           </div>
-        )}
+        </div>
       </div>
       <AddActivityModal
         isOpen={isAddActivityModalOpen}
@@ -164,8 +178,8 @@ const RoutineCard = ({
   return (
     <Button
       onClick={onClick}
-      className="flex size-full items-center gap-2 rounded-lg p-2 text-left transition duration-200"
-      // intent={(routine.style as unknown as ConfigVariants) ?? "blueAndGreen"}
+      className="flex size-full h-[100px] items-center gap-2 rounded-lg p-2 text-left transition duration-200"
+      // intent={routine.style ?? "blueAndGreen"}
     >
       <span className="text-4xl">{retrieveIcon(routine.icon)}</span>
       <div className="flex flex-col items-start">
@@ -175,8 +189,8 @@ const RoutineCard = ({
         </p>
         {timeslot && (
           <p className="font-bold text-xs">
-            {format(new Date(timeslot.startTime), "HH:mm")} -{" "}
-            {format(new Date(timeslot.endTime), "HH:mm")}
+            {format(new Date(timeslot.startTime), "HH:mm a")} -{" "}
+            {format(new Date(timeslot.endTime), "HH:mm a")}
           </p>
         )}
       </div>

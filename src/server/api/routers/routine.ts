@@ -6,14 +6,14 @@ import {
 
 export const routineRouter = createTRPCRouter({
   findAll: publicProcedure.query(async ({ ctx }) => {
-    let routines = await ctx.db.routine.findMany();
+    let routines = await ctx.db.routine.findMany({ orderBy: { name: "asc" } });
     if (routines.length > 0) {
       return routines;
     }
 
-    // should only run once, so we can init the db with some routines
+    // TODO: should only run once, so we can init the db with some routines
     await init(ctx);
-    routines = await ctx.db.routine.findMany();
+    routines = await ctx.db.routine.findMany({ orderBy: { name: "asc" } });
     return routines;
   }),
 });

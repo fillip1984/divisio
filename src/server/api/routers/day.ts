@@ -13,7 +13,7 @@ export const dayRouter = createTRPCRouter({
       orderBy: { value: "asc" },
     });
     if (days.length === 0) {
-      // should only run once, so we can init the db with some days
+      // TODO: should only run once, so we can init the db with some days
       await init(ctx);
       days = await ctx.db.day.findMany({
         include: { timeslots: { include: { routine: true } } },
