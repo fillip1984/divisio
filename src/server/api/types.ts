@@ -1,9 +1,7 @@
 import type { Day } from "date-fns";
 import type { RouterOutputs } from "~/trpc/react";
 
-export type DaySchemaType = RouterOutputs["day"]["findAll"][number] & {
-  date: Date;
-};
+export type DaySchemaType = RouterOutputs["day"]["findAll"][number];
 
 export type TimeslotSchemaType = Omit<
   DaySchemaType["timeslots"][number],

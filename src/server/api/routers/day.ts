@@ -20,24 +20,6 @@ export const dayRouter = createTRPCRouter({
         orderBy: { value: "asc" },
       });
     }
-
-    // Reference date (e.g., today)
-    const referenceDate = new Date();
-
-    // Get the start of the week (you can specify which day the week starts on)
-    const sunday = startOfWeek(referenceDate);
-    const saturday = endOfWeek(referenceDate);
-    const week = eachDayOfInterval({
-      start: sunday,
-      end: saturday,
-    });
-
-    days = days.map((day) => {
-      return {
-        ...day,
-        date: week[day.value],
-      };
-    });
     return days;
   }),
   addTimeslot: publicProcedure

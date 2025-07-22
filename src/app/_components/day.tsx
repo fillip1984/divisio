@@ -12,22 +12,30 @@ import type {
   TimeslotSchemaType,
 } from "~/server/api/types";
 import { api } from "~/trpc/react";
+import { findDateByDayOfWeek } from "~/utils/date";
 import { retrieveIcon } from "~/utils/icon";
 import { Button } from "./activityButton";
 import LoadingAndRetry from "./shared/LoadingAndRetry";
 import Modal from "./ui/modal";
 
 export default function Day({ day }: { day: DaySchemaType }) {
-  const [isAddActivityModalOpen, setIsAddActivityModalOpen] = useState(false);
-
+  const [date, setDate] = useState<Date>(
+    findDateByDayOfWeek(new Date(), day.value),
+  );
   const {
     data: daylight,
     isLoading: isLoadingDaylight,
     isError: isErrorDaylight,
     refetch: retryDaylight,
-  } = api.daylight.find.useQuery({
-    date: new Date(day.date),
-  });
+  } = api.daylight.find.useQuery(
+    {
+      date: date,
+    },
+    {
+      enabled: !!date,
+    },
+  );
+  const [isAddActivityModalOpen, setIsAddActivityModalOpen] = useState(false);
 
   return (
     <>
@@ -38,7 +46,7 @@ export default function Day({ day }: { day: DaySchemaType }) {
         {/* heading */}
         <div className="flex items-center justify-between p-2">
           <h3>{day.label}</h3>
-          <p>{format(day.date, "MMM dd")}</p>
+          {date && <p>{format(date, "MMM dd")}</p>}
         </div>
 
         {/* activities */}
